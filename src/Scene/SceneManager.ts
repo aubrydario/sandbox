@@ -1,10 +1,14 @@
-import { Color, Mesh, MeshPhongMaterial, Object3D, PlaneGeometry, Scene } from "three";
+import { Color, Mesh, MeshPhongMaterial, PlaneGeometry, Scene } from "three";
 import { LightManager } from "../Light/LightManager";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { Character } from "./Character";
+import { Keypress } from "../InputEvents/Keypress";
 
 export class SceneManager {
-  private scene: Scene
-  private gltfLoader: GLTFLoader
+  private keypress: Keypress = new Keypress();
+  public static readonly GLTF_LOADER: GLTFLoader = new GLTFLoader();
+  private scene: Scene;
+  private character: Character;
 
   constructor() {
     this.scene = new Scene();
@@ -13,10 +17,8 @@ export class SceneManager {
     const lightManger = new LightManager();
     lightManger.render(this.scene);
 
-    this.gltfLoader = new GLTFLoader();
-
     this.createPlane();
-    this.createObject();
+    this.character = new Character(this, this.keypress);
   }
 
   private createPlane() {
@@ -24,29 +26,18 @@ export class SceneManager {
     const plane = new Mesh(planeGeometry, new MeshPhongMaterial({ color: 0xbababa }));
     plane.rotateX(-Math.PI / 2);
     plane.receiveShadow = true;
-    this.scene.add(plane)
+    this.scene.add(plane);
   }
 
-  private createObject() {
-    this.gltfLoader.load('/character.gltf', (gltf: any) => {
-      const character = gltf.scene.children[0] as Object3D;
-      character.rotateZ(Math.PI / 2);
-
-      character.traverse((child: any) => {
-        if ((child as Mesh).isMesh) {
-          (child as Mesh).castShadow = true;
-          (child as Mesh).receiveShadow = true;
-        }
-      });
-
-      this.scene.add(character);
-      
-      }, undefined, (error: any) => {
-        console.error(error);
-    });
+  public getKeypress(): Keypress {
+    return this.keypress;
   }
 
-  public getScene() {
+  public getScene(): Scene {
     return this.scene;
+  }
+
+  public getCharacter(): Character {
+    return this.character
   }
 }

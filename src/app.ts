@@ -2,56 +2,65 @@ import {
   WebGLRenderer,
   ReinhardToneMapping,
   PCFSoftShadowMap,
-} from 'three'
-import { toggleFullScreen } from './helpers/fullscreen'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
+} from 'three';
+import { toggleFullScreen } from './helpers/fullscreen';
+import { resizeRendererToDisplaySize } from './helpers/responsiveness';
 
-import './style.css'
+import './style.css';
 import { CameraManager } from './Camera/CameraManager';
 import { DebugManager } from './Debug/DebugManager';
 import { SceneManager } from './Scene/SceneManager';
+import { Character } from './Scene/Character';
 
-let canvas: HTMLCanvasElement
-let renderer: WebGLRenderer
-let cameraManager: CameraManager
-let sceneManager: SceneManager
+let canvas: HTMLCanvasElement;
+let renderer: WebGLRenderer;
+let cameraManager: CameraManager;
+let sceneManager: SceneManager;
 
-init()
-animate()
+init();
+animate();
 
 function init() {
-  canvas = document.querySelector('canvas#app')!
-  renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.shadowMap.enabled = true
+  canvas = document.querySelector('canvas#app')!;
+  renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
   renderer.toneMapping = ReinhardToneMapping;
   renderer.toneMappingExposure = 2.3;
-  renderer.shadowMap.type = PCFSoftShadowMap
-  
-  sceneManager = new SceneManager()
+  renderer.shadowMap.type = PCFSoftShadowMap;
+
+  sceneManager = new SceneManager();
   cameraManager = new CameraManager(canvas);
 
   // Full screen
   window.addEventListener('dblclick', (event) => {
     if (event.target === canvas) {
-      toggleFullScreen(canvas)
+      toggleFullScreen(canvas);
     }
-  })
+  });
 
   new DebugManager(sceneManager.getScene(), cameraManager);
 }
 
 function animate() {
-  requestAnimationFrame(animate)
+  requestAnimationFrame(animate);
   const camera = cameraManager.getCamera();
 
   if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
-    camera.updateProjectionMatrix()
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
   }
 
-  cameraManager.getCameraControls().update()
+  const character: Character = sceneManager.getCharacter();
+  character.animate();
 
-  renderer.render(sceneManager.getScene(), camera)
+  const characterObject = character.getObject();
+  if (characterObject) {
+    cameraManager.getCameraControls().target.copy(characterObject.position);
+  }
+
+  cameraManager.getCameraControls().update();
+
+  renderer.render(sceneManager.getScene(), camera);
 }
